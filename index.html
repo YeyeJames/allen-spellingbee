@@ -3,23 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Spelling Bee — Allen Edition (Nebula Edition)</title>
+  <title>Allen Spelling Bee — Nebula Edition</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- 開場動畫畫面 -->
+  <!-- 開場動畫 -->
   <div id="intro-screen">
     <canvas id="intro-nebula"></canvas>
     <div id="intro-text">Welcome, Allen! — Nebula Edition</div>
   </div>
 
-  <!-- 主應用區 -->
-  <div id="app" style="display:none"></div>
-
-  <!-- 星雲背景（持續運行） -->
+  <!-- 星雲背景 -->
   <canvas id="nebula-bg"></canvas>
 
-  <!-- 匯入程式 -->
+  <!-- 主頁內容 -->
+  <div id="app" style="display:none">
+    <h1 class="big">🌀 Allen Spelling Bee</h1>
+
+    <div class="card">
+      <h2>📚 分週練習</h2>
+      <div id="weekButtons"></div>
+    </div>
+
+    <div class="card">
+      <h2>🔥 每日挑戰</h2>
+      <button class="btn" onclick="startDaily()">開始挑戰（20 題）</button>
+    </div>
+
+    <div class="card">
+      <h2>🏅 我的統計</h2>
+      <div id="statsArea"></div>
+    </div>
+
+    <div class="card">
+      <h2>🎁 小商店</h2>
+      <button class="btn" onclick="openStore()">進入小商店</button>
+    </div>
+  </div>
+
+  <!-- Script -->
   <script src="banks.js"></script>
   <script src="script-core.js"></script>
   <script src="script-store.js"></script>
