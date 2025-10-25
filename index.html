@@ -46,6 +46,7 @@
   const $ = s => document.querySelector(s);
   const app = $("#app");
   let STATE = { mode:"menu", week:null, list:[], index:0, correct:0, total:0 };
+  let recorder, audioChunks = {}, audioURLs = {}; // 錄音資料
 
   window.addEventListener("DOMContentLoaded", ()=>{
     setTimeout(()=>{
@@ -111,7 +112,11 @@
           <button class="btn" onclick="speak('${w.word}')">🔊 播放發音</button>
           <button class="btn" onclick="checkAns()">確認</button>
         </div>
-        <div id="feedback" class="small" style="margin-top:12px;min-height:50px;"></div>
+        <div id="feedback" class="small" style="margin-top:12px;min-height:80px;"></div>
+        <div id="hintArea" style="margin-top:8px;">
+          <button class="btn" onclick="playHint('${w.word}')">💡 提示</button>
+          <button class="btn" onclick="recordHint('${w.word}')">🎙️ 錄音提示</button>
+        </div>
       </div>`;
     speak(w.word); $("#ans").focus();
   }
@@ -137,6 +142,38 @@
     if(confirm("確定要返回主頁嗎？\n目前進度將不會保存。")) initApp();
   }
 
+  // === 提示功能 ===
+  function playHint(word){
+    const saved = localStorage.getItem("hint_"+word);
+    if(!saved){ alert("⚠️ 尚無提示錄音"); return; }
+    const audio = new Audio(saved);
+    audio.play();
+  }
+
+  function recordHint(word){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      alert("無法使用錄音功能");
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      recorder = new MediaRecorder(stream);
+      const chunks = [];
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/mp3' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          localStorage.setItem("hint_"+word, reader.result);
+          alert("✅ 已儲存錄音提示！");
+        };
+        reader.readAsDataURL(blob);
+      };
+      recorder.start();
+      alert("🎙️ 開始錄音（最多10秒）...");
+      setTimeout(() => { recorder.stop(); }, 10000);
+    }).catch(()=>alert("錄音權限被拒絕"));
+  }
+
   function showResult(){
     const rate=Math.round((STATE.correct/STATE.total)*100);
     const modeText=STATE.mode==="daily"?"每日挑戰":`Week ${STATE.week}`;
@@ -148,6 +185,7 @@
       </div>`;
   }
 
+  // === 公用 ===
   function loadAllWords(){
     const all=[];for(const k in BANKS)(BANKS[k]||[]).forEach(it=>all.push(it));
     return all;
@@ -155,4 +193,16 @@
 
   function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-  function speak(t){const
+  function speak(t){const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=0.9;u.pitch=1;speechSynthesis.cancel();speechSynthesis.speak(u);}
+
+  function renderStats(){
+    const s=JSON.parse(localStorage.getItem("allen_stats")||'{"runs":0,"avg":0}');
+    $("#statsArea").innerHTML=`<p>累積練習次數：${s.runs||0}</p><p>平均正確率：${s.avg?s.avg.toFixed(1):0}%</p><button class="btn" onclick="clearStats()">清除紀錄</button>`;
+  }
+  function clearStats(){localStorage.removeItem("allen_stats");renderStats();}
+  </script>
+
+  <script src="banks.js"></script>
+  <script src="script-store.js"></script>
+</body>
+</html>
