@@ -275,3 +275,104 @@ h2 {
   position: relative;
   z-index: 5;
 }
+/* === 全畫面主選單布局 === */
+#app {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+/* === 星空背景固定層 === */
+#stars {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+#app, #coinBar {
+  position: relative;
+  z-index: 5;
+}
+
+/* === 標題 === */
+.big {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  margin-bottom: 12px;
+  text-align: center;
+  color: #fff;
+}
+
+/* === 卡片統一樣式 === */
+.card {
+  width: 85%;
+  max-width: 520px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin: 8px 0;
+  text-align: center;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(255,255,255,0.1);
+}
+
+/* === 按鈕樣式 === */
+.btn {
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  padding: 8px 22px;
+  margin: 4px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.btn:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-2px);
+}
+
+/* === 小按鈕（例如返回） === */
+.btn.small {
+  font-size: 0.9rem;
+  padding: 6px 16px;
+}
+
+/* === 單字幣條固定右上角 === */
+#coinBar {
+  position: fixed;
+  top: 12px;
+  right: 16px;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 12px;
+  border-radius: 10px;
+  color: #ffd65b;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  border: 1px solid #2a3242;
+  z-index: 1000;
+}
+
+/* === 響應式：平板直向 → 放大所有文字 === */
+@media (max-width: 900px) and (orientation: portrait) {
+  .big { font-size: 2.2rem; }
+  .btn { font-size: 1.2rem; padding: 10px 26px; }
+  .card { padding: 16px 24px; }
+}
+
+/* === 響應式：手機橫向或小筆電 → 稍微緊湊 === */
+@media (max-height: 700px) {
+  #app { overflow-y: auto; padding: 20px 0; }
+  .card { padding: 10px 16px; margin: 6px 0; }
+  .btn { font-size: 0.9rem; padding: 6px 18px; }
+}
