@@ -84,35 +84,54 @@
     },3500);
   });
 
-  function initApp(){
-app.innerHTML = `
-  <h1 class="big">🌀 Allen Spelling Bee</h1>
-  <div class="card">
-    <h2>📚 分週練習</h2>
-    <div id="weekButtons"></div>
-  </div>
+function initApp() {
+  app.innerHTML = `
+    <h1 class="big" style="margin-bottom: 30px;">🌀 Allen Spelling Bee</h1>
 
-  <div class="card">
-    <h2>🔥 每日挑戰</h2>
-    <button class="btn" onclick="startDaily()">開始挑戰（20 題）</button>
-  </div>
+    <div id="menuGrid">
 
-  <div class="card">
-    <h2>📋 今日任務</h2>
-    <button class="btn" onclick="showMissions()">查看任務進度</button>
-  </div>
+      <div class="menu-item" onclick="openWeekMenu()">
+        <div class="icon">📚</div>
+        <div class="title">分週練習</div>
+        <div class="desc">選擇要練習的週次單字</div>
+      </div>
 
-  <div class="card">
-    <h2>🏅 我的統計</h2>
-    <div id="statsArea"></div>
-  </div>
+      <div class="menu-item" onclick="startDaily()">
+        <div class="icon">🔥</div>
+        <div class="title">每日挑戰</div>
+        <div class="desc">限時 20 題拼字挑戰</div>
+      </div>
 
-  <div class="card">
-    <h2>🎁 小商店</h2>
-    <button class="btn" onclick="openStore()">進入小商店</button>
-  </div>`;
-    renderWeekButtons(); renderStats();
-  }
+      <div class="menu-item" onclick="showMissions()">
+        <div class="icon">📋</div>
+        <div class="title">今日任務</div>
+        <div class="desc">查看學習任務與獎勵</div>
+      </div>
+
+      <div class="menu-item" onclick="openStore()">
+        <div class="icon">🎁</div>
+        <div class="title">小商店</div>
+        <div class="desc">用單字幣購買特效與造型</div>
+      </div>
+
+      <div class="menu-item" onclick="showStats()">
+        <div class="icon">🏅</div>
+        <div class="title">我的統計</div>
+        <div class="desc">查看練習次數與正確率</div>
+      </div>
+
+    </div>
+  `;
+
+  // 更新金幣數
+  const coins = parseInt(localStorage.getItem("allen_coins") || 0);
+  const coinBar = document.createElement("div");
+  coinBar.id = "coinBar";
+  coinBar.innerHTML = `💰 單字幣：<b>${coins}</b>`;
+  app.prepend(coinBar);
+
+  dispatchEvent(new CustomEvent("allen:start"));
+}
 
   function renderWeekButtons(){
     const container=$("#weekButtons");
