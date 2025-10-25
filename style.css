@@ -1,0 +1,48 @@
+:root {
+  --bg:#0f1115; --panel:#161a22; --text:#e8ecf1; --muted:#9aa4b2;
+  --accent:#6aa9ff; --good:#5bd68a; --bad:#ff6b6b; --coin:#ffd65b;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans",sans-serif;}
+a{color:var(--accent);text-decoration:none;}
+button{cursor:pointer;}
+
+#app{max-width:980px;margin:0 auto;padding:20px;position:relative;z-index:2;}
+.card{background:var(--panel);border:1px solid #1f2530;border-radius:14px;
+padding:16px;margin:10px 0;}
+.btn{background:#1b2230;color:var(--text);border:1px solid #2a3242;
+padding:12px 14px;border-radius:12px;}
+.btn:hover{background:#232c3b;}
+
+.big{font-size:24px;font-weight:700;margin:0;}
+.small{font-size:12px;color:var(--muted);}
+
+/* ===== 星雲背景 & 開場動畫 ===== */
+#nebula-bg,#intro-nebula{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;
+  background:radial-gradient(ellipse at bottom,#1b2735 0%,#090a0f 100%);
+}
+
+#intro-screen{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;background:#000;z-index:99;color:#fff;overflow:hidden;
+  animation:introFadeOut 2s 3s forwards;
+}
+#intro-text{
+  font-size:28px;letter-spacing:1px;font-weight:700;
+  animation:introText 3s ease-in-out 1;
+}
+@keyframes introText{
+  0%{opacity:0;transform:translateY(20px);}
+  50%{opacity:1;transform:translateY(0);}
+  100%{opacity:0;}
+}
+@keyframes introFadeOut{to{opacity:0;visibility:hidden;}}
+
+canvas#nebula-bg{z-index:1;pointer-events:none;}
+
+/* 主題切換色 */
+body.blue {--bg:#101926;--panel:#162338;--accent:#4fa0ff;}
+body.nebula {--bg:#070b12;--panel:rgba(20,24,32,.7);}
