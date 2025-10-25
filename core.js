@@ -103,3 +103,47 @@ function getCoins(){return parseInt(localStorage.getItem("allen_coins")||0);}
 function addCoins(n){localStorage.setItem("allen_coins",getCoins()+n);updateCoinBar();}
 function speak(t){const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=0.9;speechSynthesis.cancel();speechSynthesis.speak(u);}
 function startStars(){const c=document.getElementById("stars"),ctx=c.getContext("2d");let w,h;const s=[];function r(){w=c.width=innerWidth;h=c.height=innerHeight;}addEventListener("resize",r);r();for(let i=0;i<60;i++)s.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5,s:Math.random()*0.5+0.2});(function d(){ctx.clearRect(0,0,w,h);ctx.fillStyle="#fff";s.forEach(st=>{ctx.globalAlpha=Math.random()*0.5+0.3;ctx.beginPath();ctx.arc(st.x,st.y,st.r,0,2*Math.PI);ctx.fill();st.y+=st.s;if(st.y>h)st.y=0;});requestAnimationFrame(d)})();}
+
+// === 🎆 煙火特效 ===
+function launchFireworks(){
+  const canvas=document.createElement("canvas");
+  canvas.className="fireworks";
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext("2d");
+  let w=canvas.width=window.innerWidth;
+  let h=canvas.height=window.innerHeight;
+  const particles=[];
+  for(let i=0;i<50;i++){
+    particles.push({
+      x:w/2,y:h/2,
+      vx:(Math.random()-0.5)*6,
+      vy:(Math.random()-1)*6,
+      size:Math.random()*3+1,
+      life:Math.random()*60+30,
+      color:`hsl(${Math.random()*360},100%,60%)`
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p=>{
+      ctx.beginPath();
+      ctx.fillStyle=p.color;
+      ctx.arc(p.x,p.y,p.size,0,2*Math.PI);
+      ctx.fill();
+      p.x+=p.vx;
+      p.y+=p.vy;
+      p.vy+=0.05;
+      p.life--;
+      p.size*=0.98;
+    });
+  }
+  const timer=setInterval(()=>{
+    draw();
+    if(particles.every(p=>p.life<0)){
+      clearInterval(timer);
+      canvas.remove();
+    }
+  },16);
+  // 淡出效果
+  setTimeout(()=>canvas.classList.add("fadeout"),800);
+}
