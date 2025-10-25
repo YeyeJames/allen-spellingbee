@@ -1,143 +1,149 @@
-// ==========================
-// Allen Spelling Bee v5.8.1 — Store & Theme Module
-// ==========================
+// ===============================
+// Allen Spelling Bee v5.9 - Store Module
+// ===============================
 
-// === 狀態與初始化 ===
-const STORE_KEY = "allen_store_settings";
-function loadStore() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); }
-  catch { return {}; }
-}
-function saveStore(s) { localStorage.setItem(STORE_KEY, JSON.stringify(s)); }
-
-// === 顏色主題 ===
-function applyTheme(theme) {
-  document.body.classList.remove("blue", "nebula");
-  if (theme) document.body.classList.add(theme);
-  const s = loadStore();
-  s.theme = theme;
-  saveStore(s);
-
-  if (theme === "nebula") {
-    startNebula();
-    playNebulaBgm();
-  } else {
-    stopNebula();
-    stopNebulaBgm();
-  }
-}
-
-// === 星雲動畫 ===
-let nebulaCtx, nebulaAnim;
-function startNebula() {
-  const cvs = document.getElementById("nebula-bg");
-  nebulaCtx = cvs.getContext("2d");
-  let w = cvs.width = window.innerWidth;
-  let h = cvs.height = window.innerHeight;
-  const stars = Array.from({ length: 120 }, () => ({
-    x: Math.random() * w,
-    y: Math.random() * h,
-    vx: (Math.random() - 0.5) * 0.5,
-    vy: (Math.random() - 0.5) * 0.5,
-    r: 0.6 + Math.random() * 1.2,
-  }));
-  cancelAnimationFrame(nebulaAnim);
-  function loop() {
-    nebulaCtx.fillStyle = "rgba(10,15,25,0.15)";
-    nebulaCtx.fillRect(0, 0, w, h);
-    for (const s of stars) {
-      nebulaCtx.beginPath();
-      nebulaCtx.fillStyle = `hsl(${(s.x + s.y) % 360},90%,70%)`;
-      nebulaCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      nebulaCtx.fill();
-      s.x += s.vx; s.y += s.vy;
-      if (s.x < 0) s.x = w; if (s.x > w) s.x = 0;
-      if (s.y < 0) s.y = h; if (s.y > h) s.y = 0;
+window.addEventListener("DOMContentLoaded", () => {
+  // 如果有商店按鈕，就插入主畫面底部
+  const observer = new MutationObserver(() => {
+    if (!document.querySelector("#storeBtn") && document.querySelector("#app")) {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `<button id="storeBtn" class="btn" style="width:100%">🎁 開啟小商店</button>`;
+      document.querySelector("#app").appendChild(div);
+      $("#storeBtn").onclick = openStore;
     }
-    nebulaAnim = requestAnimationFrame(loop);
-  }
-  loop();
-}
-function stopNebula() {
-  if (nebulaCtx) nebulaCtx.clearRect(0, 0, innerWidth, innerHeight);
-  cancelAnimationFrame(nebulaAnim);
-}
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+});
 
-// === 星雲環境音 ===
-let nebulaAudio;
-function playNebulaBgm() {
-  const s = loadStore();
-  if (s.bgmMuted) return;
-  if (!nebulaAudio) {
-    nebulaAudio = new Audio("assets/bgm_nebula.mp3");
-    nebulaAudio.loop = true;
-    nebulaAudio.volume = 0.15;
-  }
-  nebulaAudio.play().catch(()=>{});
-}
-function stopNebulaBgm() { if (nebulaAudio) nebulaAudio.pause(); }
+// === 商店邏輯 ===
+const STORE_ITEMS = [
+  { id: "theme_blue", name: "藍色主題", price: 20, action: () => setTheme("blue") },
+  { id: "theme_rainbow", name: "🌈 彩虹主題", price: 60, action: () => setTheme("rainbow") },
+  { id: "theme_nebula", name: "🌌 星雲主題", price: 50, action: () => setTheme("nebula") },
+  { id: "coins_rain", name: "💰 金幣雨特效", price: 35, action: coinsRain },
+  { id: "fireworks", name: "🎆 煙火特效", price: 50, action: fireworks },
+  { id: "meow_voice", name: "🔈 喵老師語音開關", price: 0, toggle: true }
+];
 
-// === 商店畫面 ===
+// === 打開商店 ===
 function openStore() {
-  const coins = parseInt(localStorage.getItem("allen_coins") || "0", 10);
-  const store = loadStore();
-  app.innerHTML = `
-    <div class="card">
-      <h2>🎁 小商店</h2>
-      <p>目前持有 <span class="coin">${coins}</span> 幣</p>
-      <div id="storeItems"></div>
-      <button class="btn" onclick="applyTheme('')">🔄 恢復預設主題</button>
-      <button class="btn" onclick="initApp()">回主頁</button>
-    </div>`;
-  renderStoreItems(store, coins);
+  const coins = parseInt(localStorage.getItem("allen_coins") || 0);
+  const settings = JSON.parse(localStorage.getItem("allen_store_settings") || "{}");
+
+  let html = `<div class="card"><h2>🎁 小商店</h2><p>目前擁有 💰 ${coins} 單字幣</p>`;
+  STORE_ITEMS.forEach(it => {
+    const owned = settings[it.id];
+    html += `
+      <div class="card" style="padding:14px;margin:10px 0;background:#1b2230">
+        <b>${it.name}</b> — ${it.price > 0 ? it.price + " 幣" : "免費"}
+        ${it.toggle ? `<br><label><input type="checkbox" id="chk_${it.id}" ${settings.meowVoice!==false?"checked":""}> 啟用</label>` : ""}
+        <div style="margin-top:6px">
+          ${owned && !it.toggle
+            ? `<span style="color:#5bd68a">✅ 已擁有</span>`
+            : `<button class="btn" onclick="buyItem('${it.id}')">購買 / 使用</button>`}
+        </div>
+      </div>`;
+  });
+  html += `<button class="btn" onclick="initApp()">返回主頁</button></div>`;
+  app.innerHTML = html;
+
+  // 綁定語音開關
+  $("#chk_meow_voice")?.addEventListener("change", e => {
+    const st = JSON.parse(localStorage.getItem("allen_store_settings") || "{}");
+    st.meowVoice = e.target.checked;
+    localStorage.setItem("allen_store_settings", JSON.stringify(st));
+    dispatchEvent(new CustomEvent("allen:buy"));
+  });
 }
 
-function renderStoreItems(store, coins) {
-  const items = [
-    { id: "blue", name: "藍色主題", price: 30, action: () => applyTheme("blue") },
-    { id: "nebula", name: "🌌 星雲主題", price: 50, action: () => applyTheme("nebula") },
-    { id: "fx", name: "星光爆 Plus 特效", price: 40, action: () => alert("✨ 特效升級已啟用！") },
-    { id: "piano", name: "鋼琴音效包", price: 25, action: () => alert("🎹 音效已啟用！") },
-    { id: "unicorn", name: "🦄 探險者 Allen 徽章", price: 100, action: () => alert("🏅 已解鎖 探險者 Allen！") },
-  ];
-  const html = items.map(it => {
-    const owned = store[it.id];
-    const enough = coins >= it.price;
-    return `<div class="card small" style="margin:8px 0;padding:10px 14px">
-      <b>${it.name}</b>　—　${it.price} 幣
-      <button class="btn" style="float:right" onclick="buyItem('${it.id}')"
-        ${owned ? "disabled" : ""}>
-        ${owned ? "✅ 已擁有" : (enough ? "兌換" : "💸 不足")}
-      </button>
-    </div>`;
-  }).join("");
-  $("#storeItems").innerHTML = html;
-}
-
+// === 購買項目 ===
 function buyItem(id) {
-  const coins = parseInt(localStorage.getItem("allen_coins") || "0", 10);
-  const items = {
-    blue: { price: 30, fn: () => applyTheme("blue") },
-    nebula: { price: 50, fn: () => applyTheme("nebula") },
-    fx: { price: 40, fn: () => alert("✨ 特效升級已啟用！") },
-    piano: { price: 25, fn: () => alert("🎹 音效已啟用！") },
-    unicorn: { price: 100, fn: () => alert("🏅 已解鎖 探險者 Allen！") },
-  };
-  const it = items[id];
-  if (!it) return;
-  if (coins < it.price) { alert("💸 單字幣不足！"); return; }
+  const coins = parseInt(localStorage.getItem("allen_coins") || 0);
+  const settings = JSON.parse(localStorage.getItem("allen_store_settings") || "{}");
+  const item = STORE_ITEMS.find(i => i.id === id);
+  if (!item) return;
+  if (settings[id]) {
+    item.action?.();
+    return;
+  }
+  if (coins < item.price) {
+    alert("💸 單字幣不足！");
+    return;
+  }
 
-  localStorage.setItem("allen_coins", coins - it.price);
-  const store = loadStore();
-  store[id] = true;
-  saveStore(store);
-  alert("✅ 已兌換：" + id);
-  it.fn();
+  // 扣幣 + 保存
+  localStorage.setItem("allen_coins", coins - item.price);
+  settings[id] = true;
+  localStorage.setItem("allen_store_settings", JSON.stringify(settings));
+
+  item.action?.();
+  dispatchEvent(new CustomEvent("allen:buy")); // 喵老師說話
   openStore();
 }
 
-// === 初始化主題 ===
+// === 主題設定 ===
+function setTheme(name) {
+  document.body.className = name;
+  localStorage.setItem("allen_theme", name);
+  if (name === "rainbow") {
+    document.body.style.background = "linear-gradient(120deg,#ff8a00,#e52e71,#6a5af9,#19d3da)";
+    document.body.style.backgroundSize = "600% 600%";
+    document.body.style.animation = "rainbowFlow 10s ease infinite";
+  } else {
+    document.body.style.background = "";
+  }
+}
 window.addEventListener("load", () => {
-  const s = loadStore();
-  if (s.theme) applyTheme(s.theme);
+  const t = localStorage.getItem("allen_theme");
+  if (t) setTheme(t);
 });
+
+// === 特效：金幣雨 ===
+function coinsRain() {
+  for (let i = 0; i < 15; i++) {
+    const c = document.createElement("div");
+    c.textContent = "💰";
+    c.className = "coin-fall";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.animationDelay = i * 0.1 + "s";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 2500);
+  }
+}
+
+// === 特效：煙火 ===
+function fireworks() {
+  for (let i = 0; i < 6; i++) {
+    const f = document.createElement("div");
+    f.className = "firework";
+    f.style.left = Math.random() * 90 + "vw";
+    f.style.top = Math.random() * 60 + "vh";
+    document.body.appendChild(f);
+    setTimeout(() => f.remove(), 1500);
+  }
+}
+
+// === 動畫樣式 ===
+const css = document.createElement("style");
+css.textContent = `
+@keyframes rainbowFlow {
+  0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
+}
+.coin-fall {
+  position:fixed;font-size:28px;top:-30px;animation:coinFall 2.4s linear forwards;
+}
+@keyframes coinFall {
+  to{transform:translateY(110vh) rotate(360deg);opacity:0}
+}
+.firework{
+  position:fixed;width:8px;height:8px;border-radius:50%;
+  background:radial-gradient(circle,#fff,#ff0,#f0f);
+  animation:fireworkAnim 1.3s ease-out forwards;
+}
+@keyframes fireworkAnim {
+  0%{transform:scale(0);opacity:1}
+  70%{transform:scale(3);opacity:1}
+  100%{transform:scale(5);opacity:0}
+}`;
+document.head.appendChild(css);
