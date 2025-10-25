@@ -17,13 +17,20 @@
       from { opacity: 1; }
       to { opacity: 0.5; }
     }
-    .pulse {
-      animation: pulse 1s ease-out 3;
-    }
+    .pulse { animation: pulse 1s ease-out 3; }
     @keyframes pulse {
       0% { box-shadow: 0 0 0 0 rgba(91,214,138,0.6); }
       70% { box-shadow: 0 0 10px 10px rgba(91,214,138,0); }
       100% { box-shadow: 0 0 0 0 rgba(91,214,138,0); }
+    }
+    .coin-rule {
+      font-size: 13px;
+      color: #ffd65b;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin-top: 4px;
+      line-height: 1.4em;
     }
   </style>
 </head>
@@ -62,10 +69,11 @@
     </div>
   </div>
 
+  <!-- Script -->
   <script>
   const $ = s => document.querySelector(s);
   const app = $("#app");
-  let STATE = { mode:"menu", week:null, list:[], index:0, correct:0, total:0 };
+  let STATE = { mode:"menu", week:null, list:[], index:0, correct:0, total:0, streak:0 };
   let recorder, countdownTimer, timeLeft = 10;
 
   window.addEventListener("DOMContentLoaded", ()=>{
@@ -106,12 +114,12 @@
   }
 
   function startWeek(week){
-    STATE={mode:"week",week, list:shuffle([...BANKS[week]]),index:0,correct:0,total:0};
+    STATE={mode:"week",week, list:shuffle([...BANKS[week]]),index:0,correct:0,total:0,streak:0};
     showQuestion();
   }
 
   function startDaily(){
-    STATE={mode:"daily",week:null,list:shuffle(loadAllWords()).slice(0,20),index:0,correct:0,total:0};
+    STATE={mode:"daily",week:null,list:shuffle(loadAllWords()).slice(0,20),index:0,correct:0,total:0,streak:0};
     showQuestion();
   }
 
@@ -124,6 +132,10 @@
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <h2>${header}</h2>
           <button class="btn small" onclick="confirmBack()">返回</button>
+        </div>
+        <div class="coin-rule">
+          💰 單字幣規則：<br>
+          連續答對 1–4 題 → +1 幣；5–9 題 → +2 幣；10 題以上 → +3 幣
         </div>
         <p>第 ${STATE.index+1} / ${STATE.list.length} 題</p>
         <input id="ans" class="input" placeholder="輸入英文單字" autocomplete="off"
@@ -142,15 +154,34 @@
     speak(w.word); $("#ans").focus();
   }
 
+  // === 單字幣加成邏輯 ===
+  function rewardCoins(){
+    const c = parseInt(localStorage.getItem("allen_coins") || "0", 10);
+    let bonus = 1;
+    if (STATE.streak >= 10) bonus = 3;
+    else if (STATE.streak >= 5) bonus = 2;
+    const newCoins = c + bonus;
+    localStorage.setItem("allen_coins", newCoins);
+    return bonus;
+  }
+
   function checkAns(){
     const input=$("#ans").value.trim().toLowerCase();
     if(!input)return;
     const w=STATE.list[STATE.index];
     const ok=input===w.word.toLowerCase();
     STATE.total++;
-    let fb="";
-    if(ok){STATE.correct++;fb=`<span style="color:#5bd68a">✔ 正確！</span> ${w.meaning}`;}
-    else{fb=`<span style="color:#ff6b6b">✘ 錯誤</span> 正確答案：${w.word} (${w.meaning})`;}
+    let fb="", bonusText="";
+    if(ok){
+      STATE.correct++;
+      STATE.streak++;
+      const bonus = rewardCoins();
+      bonusText = `💰 +${bonus} 幣！（連續 ${STATE.streak} 題正確）`;
+      fb=`<span style="color:#5bd68a">✔ 正確！</span> ${w.meaning}<br>${bonusText}`;
+    } else {
+      fb=`<span style="color:#ff6b6b">✘ 錯誤</span> 正確答案：${w.word} (${w.meaning})<br>💔 連勝歸零`;
+      STATE.streak = 0;
+    }
     $("#feedback").innerHTML=`
       ${fb}
       <br><br>
@@ -163,7 +194,6 @@
     if(confirm("確定要返回主頁嗎？\n目前進度將不會保存。")) initApp();
   }
 
-  // === 提示功能 ===
   function playHint(word){
     const saved = localStorage.getItem("hint_"+word);
     if(!saved){ alert("⚠️ 尚無提示錄音"); return; }
@@ -175,15 +205,10 @@
   function recordHint(word){
     const btn = $("#recordBtn");
     const status = $("#recordingStatus");
-
-    if(btn.dataset.recording === "true"){
-      stopRecording(word, btn, status);
-      return;
-    }
+    if(btn.dataset.recording === "true"){ stopRecording(word, btn, status); return; }
 
     if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-      alert("無法使用錄音功能");
-      return;
+      alert("無法使用錄音功能"); return;
     }
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
       recorder = new MediaRecorder(stream);
@@ -196,7 +221,9 @@
           localStorage.setItem("hint_"+word, reader.result);
           btn.classList.add("pulse");
           status.textContent = "✅ 錄音已儲存！";
-          setTimeout(()=>{btn.classList.remove("pulse");status.textContent="";},1500);
+          const a = new Audio(reader.result);
+          a.play();
+          setTimeout(()=>{btn.classList.remove("pulse");status.textContent="";},2000);
         };
         reader.readAsDataURL(blob);
       };
@@ -232,16 +259,12 @@
       </div>`;
   }
 
-  // === 公用 ===
   function loadAllWords(){
     const all=[];for(const k in BANKS)(BANKS[k]||[]).forEach(it=>all.push(it));
     return all;
   }
-
   function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-
   function speak(t){const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=0.9;u.pitch=1;speechSynthesis.cancel();speechSynthesis.speak(u);}
-
   function renderStats(){
     const s=JSON.parse(localStorage.getItem("allen_stats")||'{"runs":0,"avg":0}');
     $("#statsArea").innerHTML=`<p>累積練習次數：${s.runs||0}</p><p>平均正確率：${s.avg?s.avg.toFixed(1):0}%</p><button class="btn" onclick="clearStats()">清除紀錄</button>`;
