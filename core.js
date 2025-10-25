@@ -82,10 +82,17 @@ function checkAns() {
   const ans=$("#ans").value.trim().toLowerCase();if(!ans)return;
   const w=STATE.list[STATE.index];const ok=ans===w.word.toLowerCase();
   let fb="";
-  if(ok){STATE.correct++;STATE.streak++;const bonus=calcBonus();addCoins(bonus);fb=`<span style="color:#5bd68a">✔ 正確！</span> ${w.meaning}<br>💰 +${bonus} 幣`;}
-  else{STATE.streak=0;fb=`<span style="color:#ff6b6b">✘ 錯誤</span> 正確答案：${w.word} (${w.meaning})`;}
-  $("#feedback").innerHTML=`${fb}<br><br><button class="btn" onclick="nextQuestion()">下一題 ➜</button>`;
-  updateCoinBar();
+if(ok){
+  STATE.correct++;
+  STATE.streak++;
+  const bonus=calcBonus();
+  addCoins(bonus);
+  fb=`<span style="color:#5bd68a">✔ 正確！</span> ${w.meaning}<br>💰 +${bonus} 幣`;
+  
+  // ✨ 檢查是否開啟煙火特效
+  if(localStorage.getItem("effect_fireworks")==="true"){
+    launchFireworks();
+  }
 }
 function nextQuestion(){STATE.index++;showQuestion();}
 function showResult(){const rate=Math.round((STATE.correct/STATE.total)*100);app.innerHTML=`<div class="card"><h2>✅ 完成</h2><p>答對 ${STATE.correct}/${STATE.total} 題 (${rate}%)</p><button class="btn" onclick="showMenu()">回主畫面</button></div>`;}
