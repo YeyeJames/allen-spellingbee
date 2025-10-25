@@ -376,3 +376,17 @@ h2 {
   .card { padding: 10px 16px; margin: 6px 0; }
   .btn { font-size: 0.9rem; padding: 6px 18px; }
 }
+
+/* === 煙火特效畫布 === */
+.fireworks {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999;
+  transition: opacity 1s ease;
+}
+.fireworks.fadeout {
+  opacity: 0;
+}
