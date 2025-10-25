@@ -94,3 +94,58 @@ h2 {
   padding: 6px 10px;
   margin-top: 6px;
 }
+/* === 商店區塊 === */
+.store-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 20px;
+}
+.store-item {
+  width: 160px;
+  background: var(--panel);
+  border: 1px solid #2a3242;
+  border-radius: 14px;
+  text-align: center;
+  padding: 16px 10px;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+}
+.store-item:hover {
+  transform: scale(1.07);
+  box-shadow: 0 0 18px rgba(255,255,255,0.2);
+}
+.store-item .icon {
+  font-size: 42px;
+  margin-bottom: 6px;
+}
+.store-item .title {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+.store-item .price {
+  font-size: 16px;
+  color: #ffd65b;
+}
+
+/* === 光暈特效 === */
+.glow-green { filter: drop-shadow(0 0 10px #24d17e); }
+.glow-purple { filter: drop-shadow(0 0 10px #b05fff); }
+.glow-gold { filter: drop-shadow(0 0 10px #ffd65b); }
+
+/* === 購買閃光動畫 === */
+.flash-effect {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 60%);
+  animation: flashFade 1s ease-out forwards;
+  pointer-events: none;
+  z-index: 999;
+}
+@keyframes flashFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
