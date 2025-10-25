@@ -85,24 +85,32 @@
   });
 
   function initApp(){
-    app.innerHTML = `
-      <h1 class="big">🌀 Allen Spelling Bee</h1>
-      <div class="card">
-        <h2>📚 分週練習</h2>
-        <div id="weekButtons"></div>
-      </div>
-      <div class="card">
-        <h2>🔥 每日挑戰</h2>
-        <button class="btn" onclick="startDaily()">開始挑戰（20 題）</button>
-      </div>
-      <div class="card">
-        <h2>🏅 我的統計</h2>
-        <div id="statsArea"></div>
-      </div>
-      <div class="card">
-        <h2>🎁 小商店</h2>
-        <button class="btn" onclick="openStore()">進入小商店</button>
-      </div>`;
+app.innerHTML = `
+  <h1 class="big">🌀 Allen Spelling Bee</h1>
+  <div class="card">
+    <h2>📚 分週練習</h2>
+    <div id="weekButtons"></div>
+  </div>
+
+  <div class="card">
+    <h2>🔥 每日挑戰</h2>
+    <button class="btn" onclick="startDaily()">開始挑戰（20 題）</button>
+  </div>
+
+  <div class="card">
+    <h2>📋 今日任務</h2>
+    <button class="btn" onclick="showMissions()">查看任務進度</button>
+  </div>
+
+  <div class="card">
+    <h2>🏅 我的統計</h2>
+    <div id="statsArea"></div>
+  </div>
+
+  <div class="card">
+    <h2>🎁 小商店</h2>
+    <button class="btn" onclick="openStore()">進入小商店</button>
+  </div>`;
     renderWeekButtons(); renderStats();
   }
 
