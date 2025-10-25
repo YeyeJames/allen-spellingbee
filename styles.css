@@ -215,5 +215,75 @@ p, .small {
   text-align: right;
   font-size: 18px;
   color: #ffd65b;
-  margin-bottom: 8px;
+  margin-bottom: /* === 主選單動畫與居中布局 === */
+#menuGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+  margin: 0 auto;
+  max-width: 720px;
+  margin-top: 40px;
+  justify-items: center;
+}
+
+.menu-item {
+  width: 100%;
+  background: linear-gradient(145deg, #1b2230, #10141b);
+  border: 1px solid #2a3242;
+  border-radius: 18px;
+  padding: 28px 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+  position: relative;
+  overflow: hidden;
+}
+.menu-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(106,169,255,0.15), transparent);
+  transform: skewX(-25deg);
+}
+.menu-item:hover::before {
+  animation: shine 1s ease-in-out;
+}
+@keyframes shine {
+  0% { left: -75%; }
+  50% { left: 125%; }
+  100% { left: 125%; }
+}
+.menu-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(106,169,255,0.25);
+  border-color: #6aa9ff;
+}
+
+.menu-item .icon {
+  font-size: 46px;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 0 6px rgba(106,169,255,0.6));
+}
+.menu-item .title {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #eaf4ff;
+  text-shadow: 0 0 10px rgba(106,169,255,0.4);
+}
+.menu-item .desc {
+  font-size: 17px;
+  color: #9aa4b2;
+}
+
+h1.big {
+  font-size: 34px;
+  text-align: center;
+  margin-top: 20px;
+  color: #eaf4ff;
+  text-shadow: 0 0 10px rgba(106,169,255,0.8), 0 0 25px rgba(106,169,255,0.3);
 }
