@@ -1,162 +1,227 @@
-// ===============================
-// Allen Spelling Bee v5.9 - Kids Enhanced Edition
-// ===============================
+// ============================
+// Allen Spelling Bee — Core v6A
+// ============================
 
-// 快捷選取
 const $ = s => document.querySelector(s);
 const app = $("#app");
-
-// === 全域狀態 ===
-let STATE = {
-  list: [],
-  index: 0,
-  correct: 0,
-  total: 0,
-  streak: 0,
-  coins: parseInt(localStorage.getItem("allen_coins") || 0)
-};
+let STATE = { view: "menu", list: [], index: 0, correct: 0, total: 0, streak: 0 };
+let recorder, countdownTimer, timeLeft = 10;
 
 // === 初始化 ===
 window.addEventListener("DOMContentLoaded", () => {
-  setTimeout(() => {
-    $("#intro-screen")?.remove();
-    $("#app").style.display = "block";
-    initApp();
-  }, 3500); // intro 動畫後
+  console.log("✅ Allen Spelling Bee Loaded");
+  initApp();
 });
 
 // === 主畫面 ===
 function initApp() {
   app.innerHTML = `
+    <h1 class="big">🌀 Allen Spelling Bee</h1>
     <div class="card">
-      <h1>🌟 Allen Spelling Bee</h1>
-      <p>今天要練習什麼呢？</p>
-      <div class="row">
-        <button class="btn" onclick="startDaily()">🔥 每日挑戰</button>
-        <button class="btn" onclick="startPractice()">📘 一般練習</button>
-        <button class="btn" onclick="startWrong()">❌ 錯題練習</button>
-      </div>
+      <h2>📚 分週練習</h2>
+      <div id="weekButtons"></div>
+    </div>
+    <div class="card">
+      <h2>🔥 每日挑戰</h2>
+      <button class="btn" onclick="startDaily()">開始挑戰（20 題）</button>
     </div>
     <div class="card">
       <h2>🏅 我的統計</h2>
       <div id="statsArea"></div>
-      <p class="small">💰 單字幣：<span id="coinCount">${STATE.coins}</span></p>
+    </div>
+    <div class="card">
+      <h2>🎁 小商店</h2>
+      <button class="btn" onclick="openStore()">進入小商店</button>
     </div>
   `;
+  renderWeekButtons();
   renderStats();
-  dispatchEvent(new CustomEvent("allen:start")); // 喵老師：問候
 }
 
-// === 題庫處理 ===
-function loadAllWords() {
-  const all = [];
-  for (const k in BANKS) (BANKS[k] || []).forEach(it => all.push(it));
-  return all;
+function renderWeekButtons() {
+  const container = $("#weekButtons");
+  container.innerHTML = Object.keys(BANKS)
+    .map(wk => `<button class="btn" onclick="startWeek('${wk}')">Week ${wk}</button>`)
+    .join(" ");
 }
 
-// === 開始一般練習 ===
-function startPractice() {
-  dispatchEvent(new CustomEvent("allen:start"));
-  STATE.list = shuffle(loadAllWords()).slice(0, 25);
-  resetProgress();
+// === 啟動每週練習 ===
+function startWeek(week) {
+  STATE = { mode: "week", week, list: shuffle([...BANKS[week]]), index: 0, correct: 0, total: 0, streak: 0 };
   showQuestion();
 }
 
-// === 開始每日挑戰 ===
+// === 每日挑戰 ===
 function startDaily() {
-  dispatchEvent(new CustomEvent("allen:start"));
-  STATE.list = shuffle(loadAllWords()).slice(0, 20);
-  resetProgress();
-  showQuestion();
-}
-
-// === 錯題練習（簡化版） ===
-function startWrong() {
-  const wrongList = JSON.parse(localStorage.getItem("allen_wrong") || "[]");
-  if (!wrongList.length) {
-    alert("目前沒有錯題喔！");
-    return;
-  }
-  dispatchEvent(new CustomEvent("allen:start"));
-  STATE.list = shuffle(wrongList);
-  resetProgress();
+  STATE = { mode: "daily", week: null, list: shuffle(loadAllWords()).slice(0, 20), index: 0, correct: 0, total: 0, streak: 0 };
   showQuestion();
 }
 
 // === 顯示題目 ===
 function showQuestion() {
   if (STATE.index >= STATE.list.length) return showResult();
-
   const w = STATE.list[STATE.index];
+  const header = STATE.mode === "daily" ? "🔥 每日挑戰" : `Week ${STATE.week}`;
   app.innerHTML = `
     <div class="card">
-      <h2>第 ${STATE.index + 1} / ${STATE.list.length} 題</h2>
-      <p>請聽發音並輸入正確拼字：</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2>${header}</h2>
+        <button class="btn small" onclick="confirmBack()">返回</button>
+      </div>
+      <div class="coin-rule">
+        💰 連勝加成：1–4 題 +1 幣｜5–9 題 +2 幣｜10 題以上 +3 幣
+      </div>
+      <p>第 ${STATE.index + 1} / ${STATE.list.length} 題</p>
       <input id="ans" class="input" placeholder="輸入英文單字" autocomplete="off"
         onkeydown="if(event.key==='Enter'){checkAns();}">
-      <div class="row" style="margin-top:12px">
+      <div style="margin-top:10px;">
         <button class="btn" onclick="speak('${w.word}')">🔊 播放發音</button>
         <button class="btn" onclick="checkAns()">確認</button>
       </div>
-    </div>
-    <div id="fb" class="small"></div>
-  `;
+      <div id="feedback" class="small" style="margin-top:12px;min-height:80px;"></div>
+      <div id="hintArea" style="margin-top:8px;">
+        <button class="btn" onclick="playHint('${w.word}')">💡 提示</button>
+        <button class="btn" id="recordBtn" onclick="recordHint('${w.word}')">🎙️ 錄音提示</button>
+        <div id="recordingStatus"></div>
+      </div>
+    </div>`;
   speak(w.word);
   $("#ans").focus();
 }
 
-// === 檢查答案 ===
+// === 答題判斷 ===
 function checkAns() {
-  const input = $("#ans").value.trim().toLowerCase();
-  const w = STATE.list[STATE.index];
+  const ansBox = $("#ans");
+  if (!ansBox) return;
+  const input = ansBox.value.trim().toLowerCase();
   if (!input) return;
+
+  const w = STATE.list[STATE.index];
+  if (!w || !w.word) {
+    $("#feedback").innerHTML = "⚠️ 題庫載入錯誤";
+    return;
+  }
 
   const ok = input === w.word.toLowerCase();
   STATE.total++;
 
+  let fb = "";
   if (ok) {
     STATE.correct++;
     STATE.streak++;
-    STATE.coins += coinReward();
-    localStorage.setItem("allen_coins", STATE.coins);
-    $("#fb").innerHTML = `<span style="color:#5bd68a">✔ 正確！</span> 中文：${w.meaning}`;
-    $("#coinCount").innerText = STATE.coins;
-    markStats(true);
-    dispatchEvent(new CustomEvent("allen:correct"));
+    const bonus = rewardCoins();
+    fb = `<span style="color:#5bd68a">✔ 正確！</span> ${w.meaning}<br>💰 +${bonus} 幣（連續 ${STATE.streak} 題）`;
   } else {
     STATE.streak = 0;
-    $("#fb").innerHTML = `<span style="color:#ff6b6b">✘ 錯誤</span> 中文：${w.meaning}<br>正確拼法：${w.word}`;
-    markWrong(w);
-    markStats(false);
-    dispatchEvent(new CustomEvent("allen:wrong"));
+    fb = `<span style="color:#ff6b6b">✘ 錯誤</span> 正確答案：${w.word} (${w.meaning})<br>💔 連勝歸零`;
   }
 
-  STATE.index++;
-  setTimeout(showQuestion, 1000);
+  $("#feedback").innerHTML = `${fb}<br><br><button class="btn" onclick="nextQuestion()">下一題 ➜</button>`;
 }
 
-// === 顯示結果 ===
+function nextQuestion() {
+  STATE.index++;
+  showQuestion();
+}
+
+// === 回主畫面 ===
+function confirmBack() {
+  if (confirm("確定要返回主畫面嗎？進度將不保存。")) initApp();
+}
+
+// === 發音 ===
+function speak(t) {
+  const u = new SpeechSynthesisUtterance(t);
+  u.lang = "en-US";
+  u.rate = 0.9;
+  u.pitch = 1;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+// === 單字幣加成 ===
+function rewardCoins() {
+  const c = parseInt(localStorage.getItem("allen_coins") || "0", 10);
+  let bonus = 1;
+  if (STATE.streak >= 10) bonus = 3;
+  else if (STATE.streak >= 5) bonus = 2;
+  const newCoins = c + bonus;
+  localStorage.setItem("allen_coins", newCoins);
+  return bonus;
+}
+
+// === 結果頁 ===
 function showResult() {
   const rate = Math.round((STATE.correct / STATE.total) * 100);
+  const modeText = STATE.mode === "daily" ? "每日挑戰" : `Week ${STATE.week}`;
   app.innerHTML = `
     <div class="card">
-      <h2>✅ 挑戰完成！</h2>
-      <p>答對 ${STATE.correct} / ${STATE.total} 題（${rate}%）</p>
-      <p>💰 獲得單字幣：<b>${STATE.coins}</b></p>
-      <button class="btn" onclick="initApp()">回主頁</button>
-    </div>
-  `;
-  dispatchEvent(new CustomEvent("allen:complete"));
+      <h2>✅ ${modeText} 完成</h2>
+      <p>答對 ${STATE.correct}/${STATE.total} 題 (${rate}%)</p>
+      <button class="btn" onclick="initApp()">回主畫面</button>
+    </div>`;
+}
+
+// === 提示錄音 ===
+function playHint(word) {
+  const saved = localStorage.getItem("hint_" + word);
+  if (!saved) { alert("⚠️ 尚無提示錄音"); return; }
+  const audio = new Audio(saved);
+  audio.play();
+}
+
+function recordHint(word) {
+  const btn = $("#recordBtn");
+  const status = $("#recordingStatus");
+  if (btn.dataset.recording === "true") {
+    stopRecording(word, btn, status);
+    return;
+  }
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("無法使用錄音功能");
+    return;
+  }
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    recorder = new MediaRecorder(stream);
+    const chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: "audio/mp3" });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        localStorage.setItem("hint_" + word, reader.result);
+        btn.classList.add("pulse");
+        status.textContent = "✅ 錄音已儲存！";
+        const a = new Audio(reader.result);
+        a.play();
+        setTimeout(() => { btn.classList.remove("pulse"); status.textContent = ""; }, 2000);
+      };
+      reader.readAsDataURL(blob);
+    };
+    recorder.start();
+    btn.textContent = "⏹️ 停止錄音";
+    btn.dataset.recording = "true";
+    timeLeft = 10;
+    status.textContent = `🎙️ 錄音中… (${timeLeft})`;
+    countdownTimer = setInterval(() => {
+      timeLeft--;
+      status.textContent = `🎙️ 錄音中… (${timeLeft})`;
+      if (timeLeft <= 0) stopRecording(word, btn, status);
+    }, 1000);
+  }).catch(() => alert("錄音權限被拒絕"));
+}
+
+function stopRecording(word, btn, status) {
+  clearInterval(countdownTimer);
+  if (recorder && recorder.state === "recording") recorder.stop();
+  btn.textContent = "🎙️ 錄音提示";
+  btn.dataset.recording = "false";
+  status.textContent = "";
 }
 
 // === 工具 ===
-function resetProgress() {
-  STATE.index = 0;
-  STATE.correct = 0;
-  STATE.total = 0;
-  STATE.streak = 0;
-}
-
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -165,51 +230,21 @@ function shuffle(a) {
   return a;
 }
 
-// === 發音 ===
-function speak(t) {
-  const u = new SpeechSynthesisUtterance(t);
-  u.lang = "en-US";
-  u.rate = 0.9;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
-}
-
-// === 錯題儲存 ===
-function markWrong(w) {
-  const wrong = JSON.parse(localStorage.getItem("allen_wrong") || "[]");
-  if (!wrong.find(x => x.word === w.word)) wrong.push(w);
-  localStorage.setItem("allen_wrong", JSON.stringify(wrong));
-}
-
-// === 統計 ===
-function markStats(ok) {
-  const s = JSON.parse(localStorage.getItem("allen_stats") || '{"runs":0,"correct":0,"wrong":0}');
-  s.runs++;
-  if (ok) s.correct++; else s.wrong++;
-  localStorage.setItem("allen_stats", JSON.stringify(s));
-  renderStats();
+function loadAllWords() {
+  const all = [];
+  for (const k in BANKS) (BANKS[k] || []).forEach(it => all.push(it));
+  return all;
 }
 
 function renderStats() {
-  const s = JSON.parse(localStorage.getItem("allen_stats") || '{"runs":0,"correct":0,"wrong":0}');
-  const total = s.correct + s.wrong;
-  const rate = total ? Math.round((s.correct / total) * 100) : 0;
+  const s = JSON.parse(localStorage.getItem("allen_stats") || '{"runs":0,"avg":0}');
   $("#statsArea").innerHTML = `
-    <p>練習次數：${s.runs}</p>
-    <p>累積答對率：${rate}%</p>
-    <button class="btn" onclick="clearStats()">清除統計</button>
-  `;
+    <p>累積練習次數：${s.runs || 0}</p>
+    <p>平均正確率：${s.avg ? s.avg.toFixed(1) : 0}%</p>
+    <button class="btn" onclick="clearStats()">清除紀錄</button>`;
 }
 
 function clearStats() {
   localStorage.removeItem("allen_stats");
-  localStorage.removeItem("allen_wrong");
   renderStats();
-}
-
-// === 金幣加成規則 ===
-function coinReward() {
-  if (STATE.streak >= 10) return 3;
-  if (STATE.streak >= 5) return 2;
-  return 1;
 }
