@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spelling Bee — Allen Edition (Nebula Edition)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- 開場動畫畫面 -->
+  <div id="intro-screen">
+    <canvas id="intro-nebula"></canvas>
+    <div id="intro-text">Welcome, Allen! — Nebula Edition</div>
+  </div>
+
+  <!-- 主應用區 -->
+  <div id="app" style="display:none"></div>
+
+  <!-- 星雲背景（持續運行） -->
+  <canvas id="nebula-bg"></canvas>
+
+  <!-- 匯入程式 -->
+  <script src="banks.js"></script>
+  <script src="script-core.js"></script>
+  <script src="script-store.js"></script>
+</body>
+</html>
