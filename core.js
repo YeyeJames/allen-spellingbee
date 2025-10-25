@@ -56,23 +56,24 @@ function showQuestion() {
   const w = STATE.list[STATE.index];
   const progressPercent = Math.round((STATE.index / STATE.total) * 100);
   const accuracy = STATE.index > 0 ? Math.round((STATE.correct / STATE.index) * 100) : 0;
-  app.innerHTML = `
-    <div class="card">
+app.innerHTML = `
+  <div class="quiz-card">
+    <div>
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <h2>${STATE.mode==="daily"?"🔥 每日挑戰":`Week ${STATE.week}`}</h2>
         <button class="btn small" onclick="showMenu()">返回</button>
       </div>
-      <div class="progress-wrap">
-        <div class="progress-bar" style="width:${progressPercent}%;"></div>
-      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${progressPercent}%"></div></div>
       <p>進度 ${STATE.index + 1}/${STATE.total} ｜ 正確率 ${accuracy}%</p>
       <input id="ans" class="input" placeholder="輸入英文單字" onkeydown="if(event.key==='Enter'){checkAns();}">
-      <div style="margin-top:10px;">
+      <div class="quiz-buttons">
         <button class="btn" onclick="speak('${w.word}')">🔊 播放發音</button>
         <button class="btn" onclick="checkAns()">確認</button>
       </div>
-      <div id="feedback" class="small" style="margin-top:15px;min-height:80px;"></div>
-    </div>`;
+      <div id="feedback"></div>
+    </div>
+    <button class="next-btn" onclick="nextQuestion()">下一題 ➜</button>
+  </div>`;
   speak(w.word);
   $("#ans").focus();
   updateCoinBar();
