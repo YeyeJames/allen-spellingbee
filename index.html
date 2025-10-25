@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Allen Spelling Bee — Nebula Edition</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    #recordingStatus {
+      color: #ffd65b;
+      margin-top: 10px;
+      font-size: 14px;
+      text-align: center;
+      animation: blink 1s infinite alternate;
+    }
+    @keyframes blink {
+      from { opacity: 1; }
+      to { opacity: 0.5; }
+    }
+    .pulse {
+      animation: pulse 1s ease-out 3;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(91,214,138,0.6); }
+      70% { box-shadow: 0 0 10px 10px rgba(91,214,138,0); }
+      100% { box-shadow: 0 0 0 0 rgba(91,214,138,0); }
+    }
+  </style>
 </head>
 <body>
   <!-- 開場動畫 -->
@@ -41,12 +62,11 @@
     </div>
   </div>
 
-  <!-- Script -->
   <script>
   const $ = s => document.querySelector(s);
   const app = $("#app");
   let STATE = { mode:"menu", week:null, list:[], index:0, correct:0, total:0 };
-  let recorder, audioChunks = {}, audioURLs = {}; // 錄音資料
+  let recorder, countdownTimer, timeLeft = 10;
 
   window.addEventListener("DOMContentLoaded", ()=>{
     setTimeout(()=>{
@@ -115,7 +135,8 @@
         <div id="feedback" class="small" style="margin-top:12px;min-height:80px;"></div>
         <div id="hintArea" style="margin-top:8px;">
           <button class="btn" onclick="playHint('${w.word}')">💡 提示</button>
-          <button class="btn" onclick="recordHint('${w.word}')">🎙️ 錄音提示</button>
+          <button class="btn" id="recordBtn" onclick="recordHint('${w.word}')">🎙️ 錄音提示</button>
+          <div id="recordingStatus"></div>
         </div>
       </div>`;
     speak(w.word); $("#ans").focus();
@@ -150,7 +171,16 @@
     audio.play();
   }
 
+  // === 錄音提示（含倒數與動畫）===
   function recordHint(word){
+    const btn = $("#recordBtn");
+    const status = $("#recordingStatus");
+
+    if(btn.dataset.recording === "true"){
+      stopRecording(word, btn, status);
+      return;
+    }
+
     if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
       alert("無法使用錄音功能");
       return;
@@ -164,14 +194,31 @@
         const reader = new FileReader();
         reader.onloadend = () => {
           localStorage.setItem("hint_"+word, reader.result);
-          alert("✅ 已儲存錄音提示！");
+          btn.classList.add("pulse");
+          status.textContent = "✅ 錄音已儲存！";
+          setTimeout(()=>{btn.classList.remove("pulse");status.textContent="";},1500);
         };
         reader.readAsDataURL(blob);
       };
       recorder.start();
-      alert("🎙️ 開始錄音（最多10秒）...");
-      setTimeout(() => { recorder.stop(); }, 10000);
+      btn.textContent = "⏹️ 停止錄音";
+      btn.dataset.recording = "true";
+      timeLeft = 10;
+      status.textContent = `🎙️ 錄音中… (${timeLeft})`;
+      countdownTimer = setInterval(()=>{
+        timeLeft--;
+        status.textContent = `🎙️ 錄音中… (${timeLeft})`;
+        if(timeLeft<=0) stopRecording(word, btn, status);
+      },1000);
     }).catch(()=>alert("錄音權限被拒絕"));
+  }
+
+  function stopRecording(word, btn, status){
+    clearInterval(countdownTimer);
+    if(recorder && recorder.state==="recording") recorder.stop();
+    btn.textContent = "🎙️ 錄音提示";
+    btn.dataset.recording = "false";
+    status.textContent = "";
   }
 
   function showResult(){
