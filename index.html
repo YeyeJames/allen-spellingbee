@@ -97,9 +97,13 @@
   function showQuestion(){
     if(STATE.index>=STATE.list.length)return showResult();
     const w=STATE.list[STATE.index];
+    const header = STATE.mode==="daily" ? "🔥 每日挑戰" : `Week ${STATE.week}`;
     app.innerHTML=`
       <div class="card">
-        <h2>${STATE.mode==="daily"?"🔥 每日挑戰":"Week "+STATE.week}</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h2>${header}</h2>
+          <button class="btn small" onclick="confirmBack()">返回</button>
+        </div>
         <p>第 ${STATE.index+1} / ${STATE.list.length} 題</p>
         <input id="ans" class="input" placeholder="輸入英文單字" autocomplete="off"
           onkeydown="if(event.key==='Enter'){checkAns();}">
@@ -107,7 +111,7 @@
           <button class="btn" onclick="speak('${w.word}')">🔊 播放發音</button>
           <button class="btn" onclick="checkAns()">確認</button>
         </div>
-        <div id="feedback" class="small" style="margin-top:12px;min-height:40px;"></div>
+        <div id="feedback" class="small" style="margin-top:12px;min-height:50px;"></div>
       </div>`;
     speak(w.word); $("#ans").focus();
   }
@@ -121,10 +125,17 @@
     let fb="";
     if(ok){STATE.correct++;fb=`<span style="color:#5bd68a">✔ 正確！</span> ${w.meaning}`;}
     else{fb=`<span style="color:#ff6b6b">✘ 錯誤</span> 正確答案：${w.word} (${w.meaning})`;}
-    $("#feedback").innerHTML=fb+`<br><br><button class="btn" onclick="nextQuestion()">下一題 ➜</button>`;
+    $("#feedback").innerHTML=`
+      ${fb}
+      <br><br>
+      <button class="btn" onclick="nextQuestion()">下一題 ➜</button>`;
   }
 
   function nextQuestion(){STATE.index++;showQuestion();}
+
+  function confirmBack(){
+    if(confirm("確定要返回主頁嗎？\n目前進度將不會保存。")) initApp();
+  }
 
   function showResult(){
     const rate=Math.round((STATE.correct/STATE.total)*100);
@@ -144,16 +155,4 @@
 
   function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-  function speak(t){const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=0.9;u.pitch=1;speechSynthesis.cancel();speechSynthesis.speak(u);}
-
-  function renderStats(){
-    const s=JSON.parse(localStorage.getItem("allen_stats")||'{"runs":0,"avg":0}');
-    $("#statsArea").innerHTML=`<p>累積練習次數：${s.runs||0}</p><p>平均正確率：${s.avg?s.avg.toFixed(1):0}%</p><button class="btn" onclick="clearStats()">清除紀錄</button>`;
-  }
-  function clearStats(){localStorage.removeItem("allen_stats");renderStats();}
-
-  </script>
-  <script src="banks.js"></script>
-  <script src="script-store.js"></script>
-</body>
-</html>
+  function speak(t){const
