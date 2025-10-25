@@ -1,0 +1,177 @@
+:root {
+  --bg: #0a0a0a;
+  --panel: #161a22;
+  --text: #eaf4ff;
+  --muted: #9aa4b2;
+  --accent: #6aa9ff;
+  --good: #5bd68a;
+  --bad: #ff6b6b;
+  --coin: #ffd65b;
+  --bubble: #141821;
+  --bubbleText: #eaf4ff;
+  --bubbleBorder: #2a3140;
+}
+
+/* === 基本 === */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%;
+  background: radial-gradient(circle at 20% 30%, #10131a, #0a0a0a);
+  color: var(--text);
+  font-family: "Noto Sans TC", "Comic Sans MS", system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+a { color: var(--accent); text-decoration: none; }
+
+/* === 內容區 === */
+#app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px;
+  position: relative;
+  z-index: 2;
+}
+
+h1.big {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 0 0 8px rgba(106,169,255,0.6);
+}
+
+h2 {
+  font-size: 26px;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+
+p, .small {
+  font-size: 20px;
+  line-height: 1.5em;
+}
+
+/* === 卡片 === */
+.card {
+  background: var(--panel);
+  border: 1px solid #232937;
+  border-radius: 18px;
+  padding: 22px;
+  margin: 18px 0;
+  box-shadow: 0 12px 25px rgba(0,0,0,0.35);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(0,0,0,0.45);
+}
+
+/* === 按鈕 === */
+.btn {
+  background: linear-gradient(145deg, #1d2636, #121a25);
+  border: 1px solid #2a3242;
+  color: var(--text);
+  padding: 18px 24px;
+  border-radius: 16px;
+  font-size: 22px;
+  min-height: 68px;
+  transition: all .2s ease;
+  cursor: pointer;
+}
+.btn:hover {
+  background: #243043;
+  box-shadow: 0 0 10px rgba(106,169,255,0.4);
+}
+.btn:active {
+  transform: scale(0.96);
+}
+
+/* === 輸入框 === */
+.input {
+  width: 100%;
+  padding: 18px;
+  font-size: 22px;
+  color: var(--text);
+  background: #121722;
+  border-radius: 14px;
+  border: 1px solid #2a3242;
+  outline: none;
+}
+
+/* === 進度條 === */
+.progress-wrap {
+  height: 36px;
+  border-radius: 12px;
+  background: #0d131b;
+  border: 1px solid #1f2a38;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0;
+  background: #24d17e;
+  transition: width .25s;
+}
+
+/* === 喵老師 === */
+#meow-teacher {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+#meow-teacher .meow-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #0d1017;
+  border: 3px solid #6aa9ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  box-shadow: 0 0 15px rgba(106,169,255,0.3);
+}
+#meow-teacher .meow-bubble {
+  max-width: 340px;
+  background: var(--bubble);
+  color: var(--bubbleText);
+  border: 2px solid var(--bubbleBorder);
+  padding: 14px 16px;
+  border-radius: 18px;
+  font-size: 20px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .25s, transform .25s;
+}
+#meow-teacher .meow-bubble.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === 音效動畫 === */
+.coin-fall {
+  position: fixed;
+  font-size: 28px;
+  top: -30px;
+  animation: coinFall 2.4s linear forwards;
+}
+@keyframes coinFall {
+  to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+.firework {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle,#fff,#ff0,#6aa9ff);
+  animation: fireworkAnim 1.3s ease-out forwards;
+}
+@keyframes fireworkAnim {
+  0% { transform: scale(0); opacity: 1; }
+  70% { transform: scale(3); opacity: 1; }
+  100% { transform: scale(5); opacity: 0; }
+}
