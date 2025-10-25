@@ -149,3 +149,19 @@ h2 {
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
+#coinBar {
+  position: fixed;
+  top: 10px;
+  right: 20px;
+  background: rgba(0,0,0,0.5);
+  padding: 6px 12px;
+  border-radius: 10px;
+  color: #ffd65b;
+  font-size: 18px;
+  border: 1px solid #2a3242;
+  z-index: 1000;
+}
+
+/* 商店與動畫（同 v7C + 新顏色） */
+.glow-red { filter: drop-shadow(0 0 10px #ff5f5f); }
+.glow-blue { filter: drop-shadow(0 0 10px #6aa9ff); }
